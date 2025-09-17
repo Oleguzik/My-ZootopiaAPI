@@ -2,7 +2,8 @@ import json
 
 def main():
     """
-    Read animals data from JSON file, generate HTML with animal information.
+    Read animals data from JSON file and template HTML, build HTML list items
+    per animal with <br/> separators, inject into template, and write animals.html.
     """
     try:
         # Read the JSON file
@@ -13,29 +14,33 @@ def main():
         with open('animals_template.html', 'r') as file:
             html_template = file.read()
         
-        # Generate animals output string
+        # Generate animals output string as HTML list items
         output = ""
         for animal in animals_data:
+            characteristics = animal.get('characteristics', {})
+            locations = animal.get('locations', [])
+
+            item_parts = []
             name = animal.get('name')
             if name:
-                output += f"Name: {name}\n"
-            
-            characteristics = animal.get('characteristics', {})
+                item_parts.append(f"Name: {name}<br/>\n")
+
             diet = characteristics.get('diet')
             if diet:
-                output += f"Diet: {diet}\n"
-            
-            locations = animal.get('locations', [])
+                item_parts.append(f"Diet: {diet}<br/>\n")
+
             if locations:
-                first_location = locations[0]
-                output += f"Location: {first_location}\n"
-            
+                item_parts.append(f"Location: {locations[0]}<br/>\n")
+
             animal_type = characteristics.get('type')
             if animal_type:
-                output += f"Type: {animal_type}\n"
-            
-            # Add empty line between animals
-            output += "\n"
+                item_parts.append(f"Type: {animal_type}<br/>\n")
+
+            # Only add a list item if we have at least one field
+            if item_parts:
+                output += '<li class="cards__item">\n'
+                output += ''.join(item_parts)
+                output += '</li>\n'
         
         # Replace the placeholder with the animals data
         new_html = html_template.replace('__REPLACE_ANIMALS_INFO__', output)
@@ -43,11 +48,9 @@ def main():
         # Write the new HTML content to a new file
         with open('animals.html', 'w') as file:
             file.write(new_html)
-        
+
         print("Successfully generated animals.html!")
-        print("Preview of the generated content:")
-        print(new_html)
-    
+
     except FileNotFoundError:
         print("Error: animals_data.json file not found.")
     except json.JSONDecodeError:
