@@ -100,6 +100,95 @@ def write_html_file(filepath: str, content: str) -> None:
         file.write(content)
 
 
+def get_available_skin_types(animals: List[Dict]) -> List[str]:
+    """
+    Extract all unique skin_type values from the animals data.
+
+    Args:
+        animals: List of animal dictionaries.
+
+    Returns:
+        Sorted list of unique skin_type values, including 'Unknown' for missing values.
+    """
+    skin_types = set()
+    has_missing = False
+    
+    for animal in animals:
+        characteristics = animal.get('characteristics', {})
+        skin_type = characteristics.get('skin_type')
+        
+        if skin_type:
+            skin_types.add(skin_type)
+        else:
+            has_missing = True
+    
+    result = sorted(list(skin_types))
+    if has_missing:
+        result.append('Unknown (missing skin_type)')
+    
+    return result
+
+
+def get_user_skin_type_choice(available_types: List[str]) -> str:
+    """
+    Display available skin types and get user selection.
+
+    Args:
+        available_types: List of available skin type options.
+
+    Returns:
+        Selected skin type string.
+    """
+    print("\nAvailable skin types:")
+    for i, skin_type in enumerate(available_types, 1):
+        print(f"{i}. {skin_type}")
+    
+    while True:
+        try:
+            choice = input("\nEnter the number of your choice: ").strip()
+            index = int(choice) - 1
+            
+            if 0 <= index < len(available_types):
+                selected = available_types[index]
+                print(f"You selected: {selected}")
+                return selected
+            else:
+                print(f"Please enter a number between 1 and {len(available_types)}")
+        except ValueError:
+            print("Please enter a valid number")
+        except KeyboardInterrupt:
+            print("\nExiting...")
+            exit(1)
+
+
+def filter_animals_by_skin_type(animals: List[Dict], selected_skin_type: str) -> List[Dict]:
+    """
+    Filter animals by the selected skin type.
+
+    Args:
+        animals: List of all animal dictionaries.
+        selected_skin_type: The skin type to filter by.
+
+    Returns:
+        List of animals matching the selected skin type.
+    """
+    filtered_animals = []
+    
+    for animal in animals:
+        characteristics = animal.get('characteristics', {})
+        skin_type = characteristics.get('skin_type')
+        
+        # Handle the "Unknown" case
+        if selected_skin_type == 'Unknown (missing skin_type)':
+            if not skin_type:  # Missing skin_type
+                filtered_animals.append(animal)
+        else:
+            if skin_type == selected_skin_type:
+                filtered_animals.append(animal)
+    
+    return filtered_animals
+
+
 def compile_less_to_css(less_file: str, css_file: str) -> None:
     """
     Compile LESS file to CSS using lessc command.
@@ -131,8 +220,26 @@ def main() -> None:
         animals_data = read_json_file('animals_data.json')
         template = read_template_file('animals_template.html')
         
+        # Get available skin types and user selection
+        available_skin_types = get_available_skin_types(animals_data)
+        
+        if not available_skin_types:
+            print("No skin types found in the data.")
+            return
+        
+        selected_skin_type = get_user_skin_type_choice(available_skin_types)
+        
+        # Filter animals by selected skin type
+        filtered_animals = filter_animals_by_skin_type(animals_data, selected_skin_type)
+        
+        if not filtered_animals:
+            print(f"No animals found with skin type: {selected_skin_type}")
+            return
+        
+        print(f"\nFound {len(filtered_animals)} animals with skin type '{selected_skin_type}'")
+        
         # Generate and write HTML
-        html_content = generate_html(animals_data, template)
+        html_content = generate_html(filtered_animals, template)
         write_html_file('animals.html', html_content)
         
         print("Successfully generated animals.html!")
