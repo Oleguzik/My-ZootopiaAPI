@@ -6,6 +6,7 @@ with styled cards for each animal.
 """
 
 import json
+import subprocess
 from typing import Dict, List, Optional
 
 
@@ -30,18 +31,20 @@ def serialize_animal(animal: Dict) -> str:
     # Building the card
     output = '<li class="cards__item">\n'
     output += f'  <div class="card__title">{name}</div>\n'
-    output += '  <p class="card__text">\n'
+    output += '  <div class="card__text">\n'
+    output += '    <ul class="card__details">\n'
     
     if diet := characteristics.get('diet'):
-        output += f'      <strong>Diet:</strong> {diet}<br/>\n'
+        output += f'      <li><strong>Diet:</strong> {diet}</li>\n'
     
     if locations:
-        output += f'      <strong>Location:</strong> {locations[0]}<br/>\n'
+        output += f'      <li><strong>Location:</strong> {locations[0]}</li>\n'
     
     if animal_type := characteristics.get('type'):
-        output += f'      <strong>Type:</strong> {animal_type}<br/>\n'
+        output += f'      <li><strong>Type:</strong> {animal_type}</li>\n'
     
-    output += '  </p>\n'
+    output += '    </ul>\n'
+    output += '  </div>\n'
     output += '</li>\n'
     
     return output
@@ -97,8 +100,33 @@ def write_html_file(filepath: str, content: str) -> None:
         file.write(content)
 
 
+def compile_less_to_css(less_file: str, css_file: str) -> None:
+    """
+    Compile LESS file to CSS using lessc command.
+
+    Args:
+        less_file: Path to the input LESS file.
+        css_file: Path to the output CSS file.
+
+    Raises:
+        subprocess.CalledProcessError: If lessc compilation fails.
+    """
+    try:
+        subprocess.run(['lessc', less_file, css_file], check=True, capture_output=True)
+        print(f"Successfully compiled {less_file} to {css_file}")
+    except subprocess.CalledProcessError as e:
+        print(f"Error compiling LESS: {e.stderr.decode()}")
+        raise
+    except FileNotFoundError:
+        print("Error: lessc not found. Install with: npm install -g less")
+        raise
+
+
 def main() -> None:
     try:
+        # Compile LESS to CSS
+        compile_less_to_css('styles.less', 'styles.css')
+        
         # Read input files
         animals_data = read_json_file('animals_data.json')
         template = read_template_file('animals_template.html')
