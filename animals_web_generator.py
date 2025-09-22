@@ -1,26 +1,80 @@
-"""
-Animal data HTML generator.
-
-This script reads animal data from a JSON file and generates an HTML page
-with styled cards for each animal.
-"""
-
+import requests
 import json
 import subprocess
 from typing import Dict, List, Optional
 
 
-def serialize_animal(animal: Dict) -> str:
-    """
-    Generate HTML card markup for a single animal.
+# Define API URL for animals
+ANIMALS_URL = 'https://api.api-ninjas.com/v1/animals'
+API_KEY = '1NRWsZJaHGhsICY1cICvxA==t2tvwgU62kbF4mwI'
 
+def fetch_animal_data(animal_name: str) -> List[Dict]:
+    """
+    Get animal information from the internet API.
+    
     Args:
-        animal: Dictionary containing animal data with 'name', 'characteristics',
-               and 'locations' fields.
-
+        animal_name: Name of the animal to search for
     Returns:
-        str: HTML markup for the animal card or empty string if required fields missing.
+        A list of animals with their information
     """
+    try:
+        # Make a request to the API to get animal data
+        response = requests.get(
+            ANIMALS_URL,
+            params={'name': animal_name},
+            headers={'X-Api-Key': API_KEY}
+        )
+        
+        # Check if the request was successful
+        response.raise_for_status()
+        
+        # Convert the response to Python data
+        api_data = response.json()
+        
+        # Create a list to store our animals
+        animals = []
+        
+        # Go through each animal from the API
+        for animal_info in api_data:
+            # Create an animal dictionary with the information we need
+            animal = {
+                'name': animal_info.get('name', 'Unknown'),
+                'taxonomy': {
+                    'kingdom': animal_info.get('taxonomy', {}).get('kingdom', 'Unknown'),
+                    'phylum': animal_info.get('taxonomy', {}).get('phylum', 'Unknown'),
+                    'class': animal_info.get('taxonomy', {}).get('class', 'Unknown'),
+                    'order': animal_info.get('taxonomy', {}).get('order', 'Unknown'),
+                    'family': animal_info.get('taxonomy', {}).get('family', 'Unknown'),
+                    'genus': animal_info.get('taxonomy', {}).get('genus', 'Unknown'),
+                    'scientific_name': animal_info.get('taxonomy', {}).get('scientific_name', 'Unknown')
+                },
+                'locations': animal_info.get('locations', []),
+                'characteristics': {
+                    'diet': animal_info.get('characteristics', {}).get('diet', 'Unknown'),
+                    'skin_type': animal_info.get('characteristics', {}).get('skin_type', 'Unknown'),
+                    'type': animal_info.get('characteristics', {}).get('type', 'Unknown'),
+                    'distinctive_feature': animal_info.get('characteristics', {}).get('distinctive_feature', ''),
+                    'temperament': animal_info.get('characteristics', {}).get('temperament', ''),
+                    'training': animal_info.get('characteristics', {}).get('training', ''),
+                    'average_litter_size': animal_info.get('characteristics', {}).get('average_litter_size', ''),
+                    'common_name': animal_info.get('characteristics', {}).get('common_name', animal_info.get('name', '')),
+                    'slogan': animal_info.get('characteristics', {}).get('slogan', ''),
+                    'group': animal_info.get('characteristics', {}).get('group', ''),
+                    'color': animal_info.get('characteristics', {}).get('color', ''),
+                    'lifespan': animal_info.get('characteristics', {}).get('lifespan', '')
+                }
+            }
+            # Add this animal to our list
+            animals.append(animal)
+        
+        return animals
+        
+    except requests.RequestException as e:
+        print(f"Error getting animal data for {animal_name}: {e}")
+        return []
+
+def serialize_animal(animal: Dict) -> str:
+    """ Generate HTML card markup for a single animal card """
     characteristics = animal.get('characteristics', {})
     locations = animal.get('locations', [])
     name = animal.get('name')
@@ -50,36 +104,14 @@ def serialize_animal(animal: Dict) -> str:
     return output
 
 
-def read_json_file(filepath: str) -> List[Dict]:
-    """
-    Read and parse a JSON file.
-    Args:
-        filepath: Path to the JSON file.
-    """
-    with open(filepath, 'r') as file:
-        return json.load(file)
-
-
 def read_template_file(filepath: str) -> str:
-    """
-    Read an HTML template file.
-
-    Args:
-        filepath: Path to the template file.
-    """
+    """ Read an HTML template file """
     with open(filepath, 'r') as file:
         return file.read()
 
 
 def generate_html(animals: List[Dict], template: str) -> str:
-    """
-    Generate complete HTML by combining animal data with template.
-
-    Args:
-        animals: List of animal dictionaries to serialize.
-        template: HTML template string containing __REPLACE_ANIMALS_INFO__ placeholder.
-    """
-    # Generate HTML for all animals
+    """ Generate complete HTML by combining animal data with template """
     animals_html = ''
     for animal in animals:
         animals_html += serialize_animal(animal)
@@ -89,13 +121,7 @@ def generate_html(animals: List[Dict], template: str) -> str:
 
 
 def write_html_file(filepath: str, content: str) -> None:
-    """
-    Write content to an HTML file.
-
-    Args:
-        filepath: Path where the file should be written.
-        content: String content to write to the file.
-    """
+    """ Write content to an HTML file"""
     with open(filepath, 'w') as file:
         file.write(content)
 
@@ -125,6 +151,9 @@ def get_available_skin_types(animals: List[Dict]) -> List[str]:
     result = sorted(list(skin_types))
     if has_missing:
         result.append('Unknown (missing skin_type)')
+    
+    # Add "All skin types" option at the beginning
+    result.insert(0, 'All skin types')
     
     return result
 
@@ -172,6 +201,10 @@ def filter_animals_by_skin_type(animals: List[Dict], selected_skin_type: str) ->
     Returns:
         List of animals matching the selected skin type.
     """
+    # If "All skin types" is selected, return all animals without filtering
+    if selected_skin_type == 'All skin types':
+        return animals
+    
     filtered_animals = []
     
     for animal in animals:
@@ -190,16 +223,7 @@ def filter_animals_by_skin_type(animals: List[Dict], selected_skin_type: str) ->
 
 
 def compile_less_to_css(less_file: str, css_file: str) -> None:
-    """
-    Compile LESS file to CSS using lessc command.
-
-    Args:
-        less_file: Path to the input LESS file.
-        css_file: Path to the output CSS file.
-
-    Raises:
-        subprocess.CalledProcessError: If lessc compilation fails.
-    """
+    """ Compile LESS file to CSS using lessc command """
     try:
         subprocess.run(['lessc', less_file, css_file], check=True, capture_output=True)
         print(f"Successfully compiled {less_file} to {css_file}")
@@ -216,15 +240,24 @@ def main() -> None:
         # Compile LESS to CSS
         compile_less_to_css('styles.less', 'styles.css')
         
-        # Read input files
-        animals_data = read_json_file('animals_data.json')
+        # Fetch animals data from API instead of reading JSON file
+        print("Fetching animal data from API...")
+        animals_data = fetch_animal_data('fox')
+        
+        if not animals_data:
+            print("No animal data found from API.")
+            return
+            
+        print(f"Found {len(animals_data)} fox-related animals from API")
+        
+        # Read template file
         template = read_template_file('animals_template.html')
         
         # Get available skin types and user selection
         available_skin_types = get_available_skin_types(animals_data)
         
         if not available_skin_types:
-            print("No skin types found in the data.")
+            print("No skin types found in the API data.")
             return
         
         selected_skin_type = get_user_skin_type_choice(available_skin_types)
@@ -247,7 +280,7 @@ def main() -> None:
     except FileNotFoundError as e:
         print(f"Error: Required file not found - {e.filename}")
     except json.JSONDecodeError:
-        print("Error: Invalid JSON format in animals_data.json")
+        print("Error: Invalid JSON format in API response")
     except Exception as e:
         print(f"Error: {e}")
 
