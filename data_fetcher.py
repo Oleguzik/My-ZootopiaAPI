@@ -5,9 +5,13 @@ warnings.filterwarnings('ignore', message='.*urllib3.*')
 
 import requests
 from typing import Dict, List
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 ANIMALS_URL = 'https://api.api-ninjas.com/v1/animals'
-API_KEY = '1NRWsZJaHGhsICY1cICvxA==t2tvwgU62kbF4mwI'
+API_KEY = os.getenv('API_KEY') 
 
 
 def fetch_data(animal_name):

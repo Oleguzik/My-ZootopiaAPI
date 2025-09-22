@@ -28,6 +28,7 @@ pip-delete-this-directory.txt
 *.swo
 
 # Project specific
+.env
 node_modules/
 *.css.map
 .sass-cache/
