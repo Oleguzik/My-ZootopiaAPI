@@ -1,5 +1,4 @@
 import json
-import subprocess
 import data_fetcher
 from typing import Dict, List, Optional
 
@@ -196,15 +195,25 @@ def get_animal_name_from_user() -> str:
 
 
 def compile_less_to_css(less_file: str, css_file: str) -> None:
-    """ Compile LESS file to CSS using lessc command """
+    """ Compile LESS file to CSS using lesscpy """
     try:
-        subprocess.run(['lessc', less_file, css_file], check=True, capture_output=True)
+        import lesscpy
+        from io import StringIO
+        
+        with open(less_file, 'r', encoding='utf-8') as f:
+            less_content = f.read()
+        
+        css_output = lesscpy.compile(StringIO(less_content))
+        
+        with open(css_file, 'w', encoding='utf-8') as f:
+            f.write(css_output)
+        
         print(f"Successfully compiled {less_file} to {css_file}")
-    except subprocess.CalledProcessError as e:
-        print(f"Error compiling LESS: {e.stderr.decode()}")
+    except ImportError:
+        print("Error: lesscpy not installed. Install with: pip install lesscpy")
         raise
-    except FileNotFoundError:
-        print("Error: lessc not found. Install with: npm install -g less")
+    except Exception as e:
+        print(f"Error compiling LESS: {e}")
         raise
 
 

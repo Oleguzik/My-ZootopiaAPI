@@ -82,35 +82,25 @@ Open `animals.html` in your web browser to view the generated animal cards.
 
 ## 🛠️ Dependencies
 
-### Python Dependencies
 * **requests**: For making HTTP API calls
 * **python-dotenv**: For loading environment variables from .env file
 * **lesscpy**: Python LESS compiler for CSS preprocessing
 
-### Node.js Dependencies (Alternative)
-If you prefer using Node.js for LESS compilation:
-```bash
-npm install
-npm run build-css
-```
-
 ## 🎨 Styling
 
-The project uses LESS for CSS preprocessing with variables and mixins. 
+The project uses LESS for CSS preprocessing with variables and mixins in `styles.less`.
 
-### Compiling LESS to CSS
+### Automatic LESS Compilation
 
-**Option 1: Python LESS Compiler (lesscpy)**
+The application **automatically compiles** `styles.less` to `styles.css` when you run it:
+
 ```bash
-lesscpy styles.less styles.css
+python animals_web_generator.py
 ```
 
-**Option 2: Node.js LESS Compiler**
-```bash
-npm run build-css
-# or for watching changes:
-npm run watch-css
-```
+The LESS compilation happens seamlessly in the background using the built-in `compile_less_to_css()` function.
+
+**Note**: The project includes a pre-compiled `styles.css` file, so the application works immediately without manual compilation.
 
 ## 🔧 API Integration
 
@@ -183,7 +173,7 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## 📞 Support
 
-If you have any questions or run into issues, please [open an issue](https://github.com/Oleguzik/issues) on GitHub.
+If you have any questions or run into issues, please [open an issue](https://github.com/Oleguzik/My-ZootopiaAPI/issues) on GitHub.
 
 - - -
 
