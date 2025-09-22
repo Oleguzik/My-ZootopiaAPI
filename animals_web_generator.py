@@ -119,6 +119,40 @@ def generate_html(animals: List[Dict], template: str) -> str:
     return template.replace('__REPLACE_ANIMALS_INFO__', animals_html)
 
 
+def generate_common_error_html(template: str, error_type: str, title: str, message: str, suggestion: str, emojis: str) -> str:
+    """ Generate HTML with a nice error message using CSS classes """
+    error_class = f"error-container {error_type}"
+    error_html = f'''
+        <div class="{error_class}">
+            <h2 class="error-title">
+                {title}
+            </h2>
+            <p class="error-message">
+                {message}
+            </p>
+            <p class="error-suggestion">
+                {suggestion}
+            </p>
+            <div class="error-emojis">
+                {emojis}
+            </div>
+        </div>
+    '''
+    
+    # Insert the error message into the template
+    return template.replace('__REPLACE_ANIMALS_INFO__', error_html)
+
+
+def generate_animal_not_found_error(animal_name: str, template: str) -> str:
+    """ Generate HTML error for when an animal doesn't exist """
+    title = "🦄 Oops! Animal Not Found!"
+    message = f'The animal "<strong>{animal_name}</strong>" doesn\'t exist in our database.'
+    suggestion = "🤔 Try searching for: fox, cat, dog, lion, elephant, bird, fish or snake! 🐾"
+    emojis = "🦊 🐱 🐶 🦁 🐘 🐦 🐟 🐍"
+    
+    return generate_common_error_html(template, "error-not-found", title, message, suggestion, emojis)
+
+
 def write_html_file(filepath: str, content: str) -> None:
     """ Write content to an HTML file"""
     with open(filepath, 'w') as file:
@@ -222,7 +256,7 @@ def filter_animals_by_skin_type(animals: List[Dict], selected_skin_type: str) ->
 def get_animal_name_from_user() -> str:
     """ Get animal name from user for searching """
     while True:
-        animal_name = input("Enter a name of an animal: ").strip()
+        animal_name = input("\nEnter a name of an animal: ").strip()
         if animal_name:
             return animal_name.lower()
         else:
@@ -253,7 +287,14 @@ def main() -> None:
         animals_data = fetch_animal_data(animal_name)
         
         if not animals_data:
-            print(f"No {animal_name} data found from API.")
+            print(f"No {animal_name} data found from API. Generating error page...")
+            
+            # Generate HTML with error message
+            template = read_template_file('animals_template.html')
+            html_content = generate_animal_not_found_error(animal_name, template)
+            write_html_file('animals.html', html_content)
+            
+            print(f"\nError page generated successfully: animals.html")
             return
             
         print(f"\nFound {len(animals_data)} '{animal_name}'-related animals from API")
@@ -269,10 +310,6 @@ def main() -> None:
         
         # Filter animals by selected skin type
         filtered_animals = filter_animals_by_skin_type(animals_data, selected_skin_type)
-        
-        if not filtered_animals:
-            print(f"No animals found with skin type: {selected_skin_type}")
-            return
         
         print(f"\nFound {len(filtered_animals)} animals with skin type '{selected_skin_type}'")
         
