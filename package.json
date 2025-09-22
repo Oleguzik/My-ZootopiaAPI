@@ -1,0 +1,12 @@
+{
+  "name": "my-zootopia-api",
+  "version": "1.0.0",
+  "description": "Animal data web generator with LESS styling",
+  "scripts": {
+    "build-css": "lessc styles.less styles.css",
+    "watch-css": "lessc styles.less styles.css --watch"
+  },
+  "devDependencies": {
+    "less": "^4.2.0"
+  }
+}
