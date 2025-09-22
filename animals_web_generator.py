@@ -1,76 +1,8 @@
-import requests
 import json
 import subprocess
+import data_fetcher
 from typing import Dict, List, Optional
 
-
-ANIMALS_URL = 'https://api.api-ninjas.com/v1/animals'
-API_KEY = '1NRWsZJaHGhsICY1cICvxA==t2tvwgU62kbF4mwI'
-
-def fetch_animal_data(animal_name: str) -> List[Dict]:
-    """
-    Get animal information from the internet API.
-    
-    Args:
-        animal_name: Name of the animal to search for
-    Returns:
-        A list of animals with their information
-    """
-    try:
-        # Make a request to the API to get animal data
-        response = requests.get(
-            ANIMALS_URL,
-            params={'name': animal_name},
-            headers={'X-Api-Key': API_KEY}
-        )
-        
-        # Check if the request was successful
-        response.raise_for_status()
-        
-        # Convert the response to Python data
-        api_data = response.json()
-        
-        # Create a list to store our animals
-        animals = []
-        
-        # Go through each animal from the API
-        for animal_info in api_data:
-            # Create an animal dictionary with the information we need
-            animal = {
-                'name': animal_info.get('name', 'Unknown'),
-                'taxonomy': {
-                    'kingdom': animal_info.get('taxonomy', {}).get('kingdom', 'Unknown'),
-                    'phylum': animal_info.get('taxonomy', {}).get('phylum', 'Unknown'),
-                    'class': animal_info.get('taxonomy', {}).get('class', 'Unknown'),
-                    'order': animal_info.get('taxonomy', {}).get('order', 'Unknown'),
-                    'family': animal_info.get('taxonomy', {}).get('family', 'Unknown'),
-                    'genus': animal_info.get('taxonomy', {}).get('genus', 'Unknown'),
-                    'scientific_name': animal_info.get('taxonomy', {}).get('scientific_name', 'Unknown')
-                },
-                'locations': animal_info.get('locations', []),
-                'characteristics': {
-                    'diet': animal_info.get('characteristics', {}).get('diet', 'Unknown'),
-                    'skin_type': animal_info.get('characteristics', {}).get('skin_type', 'Unknown'),
-                    'type': animal_info.get('characteristics', {}).get('type', 'Unknown'),
-                    'distinctive_feature': animal_info.get('characteristics', {}).get('distinctive_feature', ''),
-                    'temperament': animal_info.get('characteristics', {}).get('temperament', ''),
-                    'training': animal_info.get('characteristics', {}).get('training', ''),
-                    'average_litter_size': animal_info.get('characteristics', {}).get('average_litter_size', ''),
-                    'common_name': animal_info.get('characteristics', {}).get('common_name', animal_info.get('name', '')),
-                    'slogan': animal_info.get('characteristics', {}).get('slogan', ''),
-                    'group': animal_info.get('characteristics', {}).get('group', ''),
-                    'color': animal_info.get('characteristics', {}).get('color', ''),
-                    'lifespan': animal_info.get('characteristics', {}).get('lifespan', '')
-                }
-            }
-            # Add this animal to our list
-            animals.append(animal)
-        
-        return animals
-        
-    except requests.RequestException as e:
-        print(f"Error getting animal data for {animal_name}: {e}")
-        return []
 
 def serialize_animal(animal: Dict) -> str:
     """ Generate HTML card markup for a single animal card """
@@ -284,7 +216,7 @@ def main() -> None:
         # Get animal name from user
         animal_name = get_animal_name_from_user()
         print(f"Fetching '{animal_name}' data from API...")
-        animals_data = fetch_animal_data(animal_name)
+        animals_data = data_fetcher.fetch_data(animal_name)
         
         if not animals_data:
             print(f"No {animal_name} data found from API. Generating error page...")
